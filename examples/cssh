@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+set -euo pipefail
+
+## Check that hashcolor is installed, just in case:
+if ! type hashcolor &>/dev/null; then
+   echo "Hashcolor is not installed!"
+   exec ssh "${@}"
+fi
+
+## Set your FG/BG colors here:
+DEFAULT_BG="#000000"
+DEFAULT_FG="#EAEAEA"
+SSH_OPTIONS=(
+    -o "PermitLocalCommand=true"
+    -o "LocalCommand=hashcolor %C"
+)
+## Check if we're being called from within the shell:
+PARENT_COMMAND="$(ps -o comm= $PPID)"
+if [[ "${PARENT_COMMAND}" =~ sh ]]; then
+    ssh "${SSH_OPTIONS[@]}" "${@}"
+    echo -e "\033]10;${DEFAULT_FG}\007\033]11;${DEFAULT_BG}\007"
+    exit $?
+else
+    exec ssh "${SSH_OPTIONS[@]}" "${@}"
+fi   
