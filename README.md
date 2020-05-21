@@ -22,3 +22,7 @@ echo "alias ssh='cssh'" >> $HOME/.bashrc
 * Local machine hostname.
 
 If you run it from a shell (as opposed to running it your favourite terminal emulator's only process), it will try to reset the terminal colours back to defaults once SSH session is finished, but make sure to set your theme-provided colours in `DEFAULT_BG` and `DEFAULT_FG` variables in script.
+
+## Credits
+Heavily inspired (and originally made by) [dim13](https://github.com/dim13/hashcolor) aka beastie.
+![Original screenshot from Linux.Org.Ru](https://www.linux.org.ru/images/16381/original.png)
