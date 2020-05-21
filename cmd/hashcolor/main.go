@@ -17,5 +17,5 @@ func hex(c color.Color) string {
 func main() {
 	c := hashcolor.New(strings.Join(os.Args[1:], " "))
 	t, s := hashcolor.Tint(c), hashcolor.Shade(c)
-	fmt.Println("-fg", hex(t), "-bg", hex(s))
+	fmt.Printf("\033]10;%s\007\033]11;%s\007", hex(t), hex(s))
 }
