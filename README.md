@@ -1,7 +1,7 @@
-# hashcolor
+# Hashcolor
 
-Simple color randomizer for uxterm
+Simple helper for various terminal color-coding purposes.
 
-## install
+## Install
 
-	go get -u github.com/dim13/hashcolor/cmd/hashcolor
+	go get -u github.com/spijet/hashcolor/cmd/hashcolor
