@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spijet/hashcolor"
+	"github.com/spijet/hashcolor/pkg/utils"
 )
 
 func hex(c color.Color) string {

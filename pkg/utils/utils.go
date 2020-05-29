@@ -1,4 +1,4 @@
-package hashcolor
+package utils
 
 import (
 	"image/color"

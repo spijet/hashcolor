@@ -2,7 +2,4 @@ module github.com/spijet/hashcolor
 
 go 1.12
 
-require (
-	github.com/dim13/crc24 v0.0.0-20190308110643-af7201913116
-	github.com/spijet/hashcolor v0.3.1
-)
+require github.com/dim13/crc24 v0.0.0-20190308110643-af7201913116
