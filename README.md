@@ -1,4 +1,5 @@
 # Hashcolor
+![Release](https://github.com/spijet/hashcolor/workflows/Release/badge.svg)
 
 Simple helper for various terminal color-coding purposes.
 
