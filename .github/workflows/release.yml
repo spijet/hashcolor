@@ -38,12 +38,12 @@ jobs:
     - name: Package
       run: |
         mkdir -p "./build/hashcolor-${{ steps.get_version.outputs.VERSION }}"
-        cp -a --target-directory="./build/hashcolor-${{ steps.get_version.outputs.VERSION }}" \
+        cp -av --target-directory="./build/hashcolor-${{ steps.get_version.outputs.VERSION }}" \
             ./examples ./hashcolor ./LICENSE ./README.md
         cd "./build/hashcolor-${{ steps.get_version.outputs.VERSION }}"
         find . -type f -exec sha256sum "{}" + > checksums.lst
         cd ..
-        tar czf "./hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz" \
+        tar cvzf "./hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz" \
                 "./hashcolor-${{ steps.get_version.outputs.VERSION }}"
         sha256sum "./hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz" > \
                   "./hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz.sha256"
@@ -59,8 +59,8 @@ jobs:
         draft: true
         prerelease: false
 
-    - name: Upload Release Asset
-      id: upload-release-asset 
+    - name: Upload Release Tarball
+      id: upload-release-tarball
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,3 +69,14 @@ jobs:
         asset_path: ./build/hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz
         asset_name: hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz
         asset_content_type: application/gzip
+
+    - name: Upload Release Digest
+      id: upload-release-digest
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz.sha256
+        asset_name: hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz.sha256
+        asset_content_type: text/plain
