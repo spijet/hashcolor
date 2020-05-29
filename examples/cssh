@@ -2,9 +2,11 @@
 # shellcheck shell=bash
 set -euo pipefail
 
-## Check that hashcolor is installed, just in case:
-if ! type hashcolor &>/dev/null; then
-   echo "Hashcolor is not installed!"
+## Silently fall back to "plain" SSH, if:
+## - Hashcolor is not found;
+## - `ssh` is a part of a pipe command;
+## - There are I/O redirections in place.
+if ! type hashcolor &>/dev/null || ! [[ -t 0 && -t 1 && -t 2 ]]; then
    exec ssh "${@}"
 fi
 
