@@ -1,4 +1,4 @@
-name: Go
+name: Main
 
 on:
   push:
@@ -31,5 +31,5 @@ jobs:
         fi
 
     - name: Build
-      run: go build -ldflags "-s -w" -o ./hashcolor ./cmd/hashcolor/main.go
+      run: CGO_ENABLED=0 go build -ldflags "-s -w" -asmflags -trimpath -o ./hashcolor ./cmd/hashcolor/main.go
 
