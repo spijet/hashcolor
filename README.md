@@ -1,5 +1,6 @@
 # Hashcolor
-![Release](https://github.com/spijet/hashcolor/workflows/Release/badge.svg)
+[![Release](https://github.com/spijet/hashcolor/workflows/Release/badge.svg)](https://github.com/spijet/hashcolor/actions)[![Go Report Card](https://goreportcard.com/badge/github.com/spijet/hashcolor)](https://goreportcard.com/report/github.com/spijet/hashcolor)
+
 
 Simple helper for various terminal color-coding purposes.
 
