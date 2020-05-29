@@ -30,17 +30,14 @@ jobs:
       run: |
         export CGO_ENABLED=0
         go build -ldflags "-s -w" \
-                 -trimpath \
-                 -o ./hashcolor
+                 -trimpath        \
+                 -o ./hashcolor   \
            ./cmd/hashcolor/main.go
 
     - name: Package
       run: |
         tar czf ./hashcolor-${{ github.ref }}-linux-x86_64.tar.gz \
-            ./examples
-            ./hashcolor
-            ./LICENSE
-            ./README.md
+            ./examples ./hashcolor ./LICENSE ./README.md
 
     - name: Create Release
       id: create_release
