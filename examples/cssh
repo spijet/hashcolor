@@ -19,8 +19,11 @@ SSH_OPTIONS=(
 PARENT_COMMAND="$(ps -o comm= $PPID)"
 if [[ "${PARENT_COMMAND}" =~ sh ]]; then
     ssh "${SSH_OPTIONS[@]}" "${@}"
+    ## Capture SSH exit code here, to use it as our own later:
+    SSH_EC="$?"
+    ## Reset terminal colors to defaults:
     echo -e "\033]10;${DEFAULT_FG}\007\033]11;${DEFAULT_BG}\007"
-    exit $?
+    exit "${SSH_EC}"
 else
     exec ssh "${SSH_OPTIONS[@]}" "${@}"
 fi   
