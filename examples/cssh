@@ -10,6 +10,15 @@ if ! type hashcolor &>/dev/null || ! [[ -t 0 && -t 1 && -t 2 ]]; then
    exec ssh "${@}"
 fi
 
+set_colors() {
+    local _fg="${1}" _bg="${2}"
+    if [[ "${TERM_PROGRAM}" == 'iTerm.app' ]]; then
+        echo -e "\033]1337;SetColors=fg=rgb:${_fg}\033\\\033]1337;SetColors=bg=rgb:${_bg}\033\\"
+    else
+        echo -e "\033]10;${_fg}\007\033]11;${_bg}\007"
+    fi
+}
+
 ## Set your FG/BG colors here:
 DEFAULT_BG="#000000"
 DEFAULT_FG="#EAEAEA"
@@ -24,8 +33,8 @@ if [[ "${PARENT_COMMAND}" =~ sh ]]; then
     ## Capture SSH exit code here, to use it as our own later:
     SSH_EC="$?"
     ## Reset terminal colors to defaults:
-    echo -e "\033]10;${DEFAULT_FG}\007\033]11;${DEFAULT_BG}\007"
+    set_colors "${DEFAULT_FG}" "${DEFAULT_BG}"
     exit "${SSH_EC}"
 else
     exec ssh "${SSH_OPTIONS[@]}" "${@}"
-fi   
+fi
