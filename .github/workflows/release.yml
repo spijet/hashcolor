@@ -1,53 +1,16 @@
-name: Release
+name: Create a draft Release
 
 on:
   push:
     tags: [ "v*" ]
 
 jobs:
-  build:
-    name: Build Release
+  create:
+    name: Create Release
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.14
-      id: go
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-
-    - name: Get dependencies
-      run: |
-        go get -v -t -d ./...
-        go mod download
-        go mod verify
-
-    - name: Get the version
-      id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-
-    - name: Build
-      run: |
-        export CGO_ENABLED=0
-        go build -ldflags "-s -w -X main.Version=${{ steps.get_version.outputs.VERSION }}" \
-                 -trimpath -o ./hashcolor \
-           ./cmd/hashcolor/main.go
-
-    - name: Package
-      run: |
-        mkdir -p "./build/hashcolor-${{ steps.get_version.outputs.VERSION }}"
-        cp -av --target-directory="./build/hashcolor-${{ steps.get_version.outputs.VERSION }}" \
-            ./examples ./hashcolor ./LICENSE ./README.md
-        cd "./build/hashcolor-${{ steps.get_version.outputs.VERSION }}"
-        find . -type f -exec sha256sum "{}" + > checksums.lst
-        cd ..
-        tar cvzf "./hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz" \
-                "./hashcolor-${{ steps.get_version.outputs.VERSION }}"
-        sha256sum "./hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz" > \
-                  "./hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz.sha256"
-
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -59,24 +22,82 @@ jobs:
         draft: true
         prerelease: false
 
-    - name: Upload Release Tarball
+  build:
+    name: Build Release binaries
+    runs-on: ubuntu-latest
+    needs: create
+    strategy:
+      matrix:
+        goos: [linux, darwin]
+        goarch: [amd64, arm64]
+
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+    - name: Set up Go 1.x
+      id: go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.16
+
+    - name: Get dependencies
+      run: |
+        go get -v -t -d ./...
+        go mod download
+        go mod verify
+
+    - name: Build Golang binaries (${{ matrix.goos }}/${{ matrix.goarch }})
+      id: build_binary
+      env:
+        CGO_ENABLED: 0
+        GOOS: "${{ matrix.goos }}"
+        GOARCH: "${{ matrix.goarch }}"
+      run: |
+        go build -ldflags "-s -w -X main.Version=${{ steps.get_version.outputs.VERSION }}" \
+                 -trimpath -o ./hashcolor \
+           ./cmd/hashcolor/main.go
+
+    - name: Package (${{ matrix.goos }}/${{ matrix.goarch }})
+      env:
+        CGO_ENABLED: 0
+        GOOS: "${{ matrix.goos }}"
+        GOARCH: "${{ matrix.goarch }}"
+        VERSION: "${{ steps.get_version.outputs.VERSION }}"
+      run: |
+        mkdir -p "./build/hashcolor-${VERSION}"
+        cp -av --target-directory="./build/hashcolor-${VERSION}" \
+            ./examples ./hashcolor ./LICENSE ./README.md
+        cd "./build/hashcolor-${VERSION}"
+        find . -type f -exec sha256sum "{}" + > checksums.lst
+        cd ..
+        tar cvzf "./hashcolor-${VERSION}-${GOOS}-${GOARCH}.tar.gz" \
+                "./hashcolor-${VERSION}"
+        sha256sum "./hashcolor-${VERSION}-${GOOS}-${GOARCH}.tar.gz" > \
+                  "./hashcolor-${VERSION}-${GOOS}-${GOARCH}.tar.gz.sha256"
+
+    - name: Upload Release Tarball (${{ matrix.goos }}/${{ matrix.goarch }})
       id: upload-release-tarball
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz
-        asset_name: hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz
+        upload_url: ${{ needs.create.outputs.upload_url }}
+        asset_path: ./build/hashcolor-${{ steps.get_version.outputs.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
+        asset_name: hashcolor-${{ steps.get_version.outputs.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
         asset_content_type: application/gzip
 
-    - name: Upload Release Digest
+    - name: Upload Release Digest (${{ matrix.goos }}/${{ matrix.goarch }})
       id: upload-release-digest
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz.sha256
-        asset_name: hashcolor-${{ steps.get_version.outputs.VERSION }}-linux-x86_64.tar.gz.sha256
+        upload_url: ${{ needs.create.outputs.upload_url }}
+        asset_path: ./build/hashcolor-${{ steps.get_version.outputs.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz.sha256
+        asset_name: hashcolor-${{ steps.get_version.outputs.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz.sha256
         asset_content_type: text/plain
