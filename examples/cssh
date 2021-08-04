@@ -13,7 +13,7 @@ fi
 set_colors() {
     local _fg="${1}" _bg="${2}"
     if [[ "${TERM_PROGRAM}" == 'iTerm.app' ]]; then
-        echo -e "\033]1337;SetColors=fg=rgb:${_fg}\033\\\033]1337;SetColors=bg=rgb:${_bg}\033\\"
+        echo -ne "\033]1337;SetColors=fg=rgb:${_fg}\033\\ \033]1337;SetColors=bg=rgb:${_bg}\033\\"
     else
         echo -ne "\033]10;#${_fg}\007\033]11;#${_bg}\007"
     fi
