@@ -15,13 +15,13 @@ set_colors() {
     if [[ "${TERM_PROGRAM}" == 'iTerm.app' ]]; then
         echo -e "\033]1337;SetColors=fg=rgb:${_fg}\033\\\033]1337;SetColors=bg=rgb:${_bg}\033\\"
     else
-        echo -e "\033]10;${_fg}\007\033]11;${_bg}\007"
+        echo -ne "\033]10;#${_fg}\007\033]11;#${_bg}\007"
     fi
 }
 
 ## Set your FG/BG colors here:
-DEFAULT_BG="#000000"
-DEFAULT_FG="#EAEAEA"
+DEFAULT_BG="000000"
+DEFAULT_FG="EAEAEA"
 SSH_OPTIONS=(
     -o "PermitLocalCommand=true"
     -o "LocalCommand=hashcolor %C"
