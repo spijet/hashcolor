@@ -28,9 +28,9 @@ set_colors() {
             _fg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_fg}")"
             _bg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_bg}")"
         fi
-        printf "\e]1337;SetColors=fg=${_fg:-rgb:${DEFAULT_FG}}\a\e]1337;SetColors=bg=${_bg:-rgb:${DEFAULT_BG}}\a"
+        printf "\e]1337;SetColors=fg=%s\a\e]1337;SetColors=bg=%s\a" "${_fg:-rgb:${DEFAULT_FG}}" "${_bg:-rgb:${DEFAULT_BG}}"
     else
-        printf "\e]10;${_fg:-#${DEFAULT_FG}}\a\e]11;${_bg:-#${DEFAULT_BG}}\a"
+        printf "\e]10;%s\a\e]11;%s\a" "${_fg:-rgb:#${DEFAULT_FG}}" "${_bg:-rgb:#${DEFAULT_BG}}"
     fi
 }
 
@@ -39,8 +39,8 @@ query_colors() {
     oldstty="$(stty -g)"
     stty raw -echo min 0
 	  printf "\e]10;?\a\e]11;?\a"
-    read -d $'\a' -s -t 1 fg
-    read -d $'\a' -s -t 1 bg
+    read -d $'\a' -s -r -t 1 fg
+    read -d $'\a' -s -r -t 1 bg
     stty "${oldstty}"
     def_fg="${fg##*;}"
     def_bg="${bg##*;}"
@@ -54,6 +54,7 @@ if [[ "${PARENT_COMMAND}" =~ sh ]]; then
     ## Determine current colors (if enabled):
     [[ "${DEF_COLORS_AUTO}" == true ]] && query_colors
 
+    # shellcheck disable=SC2029
     ssh "${SSH_OPTIONS[@]}" "${@}"
     ## Capture SSH exit code here, to use it as our own later:
     SSH_EC="$?"
