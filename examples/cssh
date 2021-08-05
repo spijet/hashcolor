@@ -10,30 +10,55 @@ if ! type hashcolor &>/dev/null || ! [[ -t 0 && -t 1 && -t 2 ]]; then
    exec ssh "${@}"
 fi
 
-set_colors() {
-    local _fg="${1}" _bg="${2}"
-    if [[ "${TERM_PROGRAM}" == 'iTerm.app' ]]; then
-        echo -ne "\033]1337;SetColors=fg=rgb:${_fg}\033\\ \033]1337;SetColors=bg=rgb:${_bg}\033\\"
-    else
-        echo -ne "\033]10;#${_fg}\007\033]11;#${_bg}\007"
-    fi
-}
-
-## Set your FG/BG colors here:
+## Set your fallback FG/BG colors here:
 DEFAULT_BG="000000"
 DEFAULT_FG="EAEAEA"
+## Set this to `false` if autodetection doesn't work for you:
+DEF_COLORS_AUTO=true
 SSH_OPTIONS=(
     -o "PermitLocalCommand=true"
     -o "LocalCommand=hashcolor %C"
 )
+
+## Set FG/BG colors in terminal:
+set_colors() {
+    local _fg="${1}" _bg="${2}"
+    if [[ "${TERM_PROGRAM}" == 'iTerm.app' ]]; then
+        if [[ "${#_fg}" -ge 10 ]]; then
+            _fg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_fg}")"
+            _bg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_bg}")"
+        fi
+        printf "\e]1337;SetColors=fg=${_fg:-rgb:${DEFAULT_FG}}\a\e]1337;SetColors=bg=${_bg:-rgb:${DEFAULT_BG}}\a"
+    else
+        printf "\e]10;${_fg:-#${DEFAULT_FG}}\a\e]11;${_bg:-#${DEFAULT_BG}}\a"
+    fi
+}
+
+## Query current FG/BG colors using OSC:
+query_colors() {
+    oldstty="$(stty -g)"
+    stty raw -echo min 0
+	  printf "\e]10;?\a\e]11;?\a"
+    read -d $'\a' -s -t 1 fg
+    read -d $'\a' -s -t 1 bg
+    stty "${oldstty}"
+    def_fg="${fg##*;}"
+    def_bg="${bg##*;}"
+}
+
 ## Check if we're being called from within the shell:
 PARENT_COMMAND="$(ps -o comm= $PPID)"
 if [[ "${PARENT_COMMAND}" =~ sh ]]; then
+    def_fg=''
+    def_bg=''
+    ## Determine current colors (if enabled):
+    [[ "${DEF_COLORS_AUTO}" == true ]] && query_colors
+
     ssh "${SSH_OPTIONS[@]}" "${@}"
     ## Capture SSH exit code here, to use it as our own later:
     SSH_EC="$?"
     ## Reset terminal colors to defaults:
-    set_colors "${DEFAULT_FG}" "${DEFAULT_BG}"
+    set_colors "${def_fg}" "${def_bg}"
     exit "${SSH_EC}"
 else
     exec ssh "${SSH_OPTIONS[@]}" "${@}"
