@@ -24,7 +24,7 @@ SSH_OPTIONS=(
 set_colors() {
     local _fg="${1}" _bg="${2}"
     if [[ "${TERM_PROGRAM}" == 'iTerm.app' ]]; then
-        if [[ "${#_fg}" -ge 10 ]]; then
+        if [[ "${#_fg}" -ge 6 ]]; then
             _fg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_fg}")"
             _bg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_bg}")"
         fi
@@ -42,8 +42,13 @@ query_colors() {
     read -d $'\a' -s -r -t 1 fg
     read -d $'\a' -s -r -t 1 bg
     stty "${oldstty}"
-    def_fg="${fg##*;}"
-    def_bg="${bg##*;}"
+    if [[ "${fg}" =~ 'rgb:' ]]; then
+        def_fg="${fg##*;rgb:}"
+        def_bg="${bg##*;rgb:}"
+    else
+        def_fg="${fg##*;}"
+        def_bg="${bg##*;}"
+    fi
 }
 
 ## Check if we're being called from within the shell:
