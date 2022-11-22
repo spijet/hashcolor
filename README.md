@@ -1,5 +1,5 @@
 # Hashcolor
-[![Release](https://github.com/spijet/hashcolor/workflows/Release/badge.svg)](https://github.com/spijet/hashcolor/actions)[![Go Report Card](https://goreportcard.com/badge/github.com/spijet/hashcolor)](https://goreportcard.com/report/github.com/spijet/hashcolor)
+[![Release](https://github.com/spijet/hashcolor/actions/workflows/release.yml/badge.svg)](https://github.com/spijet/hashcolor/actions)[![Go Report Card](https://goreportcard.com/badge/github.com/spijet/hashcolor)](https://goreportcard.com/report/github.com/spijet/hashcolor)
 
 
 Simple helper for various terminal color-coding purposes.
@@ -7,7 +7,7 @@ Simple helper for various terminal color-coding purposes.
 ## Install
 
 	go get -u github.com/spijet/hashcolor/cmd/hashcolor
-	
+
 ## Examples
 ### Colored SSH
 The `examples/cssh` script provides an example of per-host color-coded SSH sessions. To use it, copy it to somewhere in `$PATH`, mark it executable and (optionally) make an alias for it:
