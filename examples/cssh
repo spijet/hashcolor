@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-set -euo pipefail
+set -uo pipefail
 
 ## Silently fall back to "plain" SSH, if:
 ## - Hashcolor is not found;
@@ -20,51 +20,82 @@ SSH_OPTIONS=(
     -o "LocalCommand=hashcolor %C"
 )
 
+## Check that terminal in use is iTerm.app:
+is_iterm() {
+    [[ "${TERM_PROGRAM:-}" == 'iTerm.app' ]]
+}
+
+## Check that terminal in use is iTerm.app v3.5.0 or newer:
+is_iterm_350() {
+    local _ref="3.5.0" _ver="${TERM_PROGRAM_VERSION:-0.0.0}" \
+          _newest=""
+
+    _newest="$(echo -e "${_ref}\n${_ver}" | sort -V | head -n1)"
+
+    is_iterm && [[ "${_ver}" == "${_newest}" ]]
+}
+
+## Reset FG/BG colors using iTerm 3.5's new OSC 110/111:
+iterm_reset_colors() {
+    printf '\e]110\a\e]111\a'
+}
+
 ## Set FG/BG colors in terminal:
 set_colors() {
     local _fg="${1}" _bg="${2}"
-    if [[ "${TERM_PROGRAM}" == 'iTerm.app' ]]; then
-        if [[ "${#_fg}" -ge 6 ]]; then
-            _fg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_fg}")"
-            _bg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_bg}")"
-        fi
-        printf "\e]1337;SetColors=fg=%s\a\e]1337;SetColors=bg=%s\a" "${_fg:-rgb:${DEFAULT_FG}}" "${_bg:-rgb:${DEFAULT_BG}}"
+    if [[ "${#_fg}" -gt 6 ]]; then
+        _fg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_fg}")"
+        _bg="$(sed -E 's#[0-9a-f]{2}(/|$)##g' <<< "${_bg}")"
+    fi
+    if is_iterm; then
+        printf '\e]1337;SetColors=fg=%s\a\e]1337;SetColors=bg=%s\a' "${_fg}" "${_bg}"
     else
-        printf "\e]10;%s\a\e]11;%s\a" "${_fg:-rgb:#${DEFAULT_FG}}" "${_bg:-rgb:#${DEFAULT_BG}}"
+        printf '\e]10;#%s\a\e]11;#%s\a' "${_fg}" "${_bg}"
     fi
 }
 
 ## Query current FG/BG colors using OSC:
 query_colors() {
-    oldstty="$(stty -g)"
+    # shellcheck disable=SC2155
+    local _oldstty="$(stty -g)" _terminator=$'\a' _foo="" _fg="" _bg=""
     stty raw -echo min 0
-	  printf "\e]10;?\a\e]11;?\a"
-    read -d $'\a' -s -r -t 1 fg
-    read -d $'\a' -s -r -t 1 bg
-    stty "${oldstty}"
-    if [[ "${fg}" =~ 'rgb:' ]]; then
-        def_fg="${fg##*;rgb:}"
-        def_bg="${bg##*;rgb:}"
-    else
-        def_fg="${fg##*;}"
-        def_bg="${bg##*;}"
-    fi
+
+    is_iterm && _terminator=$'\e'
+    printf "\e]10;?\a\e]11;?\a" > /dev/tty
+
+    IFS=: read -d "${_terminator}" -t 0.1 -r _foo _fg < /dev/tty
+    IFS=: read -d "${_terminator}" -t 0.1 -r _foo _bg < /dev/tty
+
+    stty "${_oldstty}"
+
+    echo "${_fg}" "${_bg}"
 }
 
 ## Check if we're being called from within the shell:
 PARENT_COMMAND="$(ps -o comm= $PPID)"
 if [[ "${PARENT_COMMAND}" =~ sh ]]; then
-    def_fg=''
-    def_bg=''
-    ## Determine current colors (if enabled):
-    [[ "${DEF_COLORS_AUTO}" == true ]] && query_colors
+
+    # It seems that iTerm 3.5.x and newer supports OSC 110/111,
+    # so all this is redundant.
+    if ! is_iterm_350; then
+        def_fg="${DEFAULT_FG}"
+        def_bg="${DEFAULT_BG}"
+        ## Determine current colors (if enabled):
+        if [[ "${DEF_COLORS_AUTO}" == true ]]; then
+            read -r def_fg def_bg <<< "$(query_colors)"
+        fi
+    fi
 
     # shellcheck disable=SC2029
     ssh "${SSH_OPTIONS[@]}" "${@}"
     ## Capture SSH exit code here, to use it as our own later:
     SSH_EC="$?"
     ## Reset terminal colors to defaults:
-    set_colors "${def_fg}" "${def_bg}"
+    if is_iterm_350; then
+        iterm_reset_colors
+    else
+        set_colors "${def_fg}" "${def_bg}"
+    fi
     exit "${SSH_EC}"
 else
     exec ssh "${SSH_OPTIONS[@]}" "${@}"
