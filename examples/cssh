@@ -30,7 +30,7 @@ is_iterm_350() {
     local _ref="3.5.0" _ver="${TERM_PROGRAM_VERSION:-0.0.0}" \
           _newest=""
 
-    _newest="$(echo -e "${_ref}\n${_ver}" | sort -V | head -n1)"
+    _newest="$(echo -e "${_ref}\n${_ver}" | sort -V | tail -n1)"
 
     is_iterm && [[ "${_ver}" == "${_newest}" ]]
 }
