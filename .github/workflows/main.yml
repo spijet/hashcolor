@@ -32,6 +32,9 @@ jobs:
         go mod download
         go mod verify
 
+    - name: Run tests
+      run: go test -covermode atomic -coverprofile=coverage.txt ./...
+
     - name: Build
       run: |
         export CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }}

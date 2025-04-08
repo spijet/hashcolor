@@ -51,6 +51,9 @@ jobs:
         go mod download
         go mod verify
 
+    - name: Run tests
+      run: go test -covermode atomic -coverprofile=coverage.txt ./...
+
     - name: Build Golang binaries (${{ matrix.goos }}/${{ matrix.goarch }})
       id: build_binary
       env:
