@@ -101,3 +101,6 @@ jobs:
         asset_path: ./build/hashcolor-${{ steps.get_version.outputs.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz.sha256
         asset_name: hashcolor-${{ steps.get_version.outputs.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz.sha256
         asset_content_type: text/plain
+
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2

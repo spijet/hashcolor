@@ -39,3 +39,6 @@ jobs:
                  -trimpath        \
                  -o ./hashcolor-${{ matrix.goos }}-${{ matrix.goarch }}   \
            ./cmd/hashcolor/main.go
+
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
